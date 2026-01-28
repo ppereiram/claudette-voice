@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claudette - Tu Asistente IA con Voz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .api-section {
+            background: #f7f9fc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .api-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .api-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        
+        .api-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .api-section button {
+            margin-top: 10px;
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .api-section button:hover {
+            background: #5568d3;
+        }
+        
+        .api-section button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .message.assistant {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .message strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: #667eea;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .mic-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .mic-button:active {
+            transform: scale(0.95);
+        }
+        
+        .mic-button.listening {
+            background: #dc3545;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .mic-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .info {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Claudette</h1>
+            <p>Tu Asistente IA con 216 Modelos Mentales</p>
+        </div>
+        
+        <div class="warning">
+            ⚠️ <strong>Importante:</strong> Tu API key se almacena SOLO en tu navegador y nunca se comparte con nadie.
+        </div>
+        
+        <div class="api-section">
+            <label for="apiKey">🔑 Claude API Key:</label>
+            <input 
+                type="password" 
+                id="apiKey" 
+                placeholder="sk-ant-api03-..."
+                autocomplete="off"
+            />
+            <button id="connectBtn">Conectar a Claude API</button>
+        </div>
+        
+        <div id="status" class="status disconnected">
+            ❌ Desconectado - Ingresa tu API key
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="message assistant">
+                <strong>Claudette:</strong>
+                Hola Pablo, soy Claudette, tu asistente ejecutiva con acceso a tus 216 modelos mentales. Cuando estés listo, presiona el micrófono y háblame. Estoy aquí para ayudarte a tomar decisiones estratégicas bien informadas.
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="mic-button" id="micBtn" disabled>
+                🎤
+            </button>
+        </div>
+        
+        <div class="info" id="info">
+            Presiona el micrófono para hablar con Claudette
+        </div>
+    </div>
+
+    <script>
+        let apiKey = '';
+        let isConnected = false;
+        let isListening = false;
+        let isProcessing = false;
+        let recognition;
+        
+        const apiKeyInput = document.getElementById('apiKey');
+        const connectBtn = document.getElementById('connectBtn');
+        const statusDiv = document.getElementById('status');
+        const chatContainer = document.getElementById('chatContainer');
+        const micBtn = document.getElementById('micBtn');
+        const infoDiv = document.getElementById('info');
+        
+        // Inicializar reconocimiento de voz
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'es-ES';
+            
+            recognition.onresult = async (event) => {
+                const transcript = event.results[0][0].transcript;
+                addMessage('user', transcript);
+                await sendToClaudette(transcript);
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('Error de reconocimiento:', event.error);
+                updateStatus('disconnected', '❌ Error de micrófono: ' + event.error);
+                stopListening();
+            };
+            
+            recognition.onend = () => {
+                stopListening();
+            };
+        } else {
+            infoDiv.innerHTML = '⚠️ Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.';
+            micBtn.disabled = true;
+        }
+        
+        // Conectar API
+        connectBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (key.startsWith('sk-ant-api03-')) {
+                apiKey = key;
+                isConnected = true;
+                updateStatus('connected', '✅ Conectado a Claude API');
+                micBtn.disabled = false;
+                apiKeyInput.disabled = true;
+                connectBtn.disabled = true;
+                connectBtn.textContent = 'Conectado ✓';
+                
+                // Guardar en localStorage (solo en este navegador)
+                localStorage.setItem('claudette_api_key', apiKey);
+            } else {
+                alert('API key inválida. Debe empezar con sk-ant-api03-');
+            }
+        });
+        
+        // Cargar API key si existe
+        const savedKey = localStorage.getItem('claudette_api_key');
+        if (savedKey) {
+            apiKeyInput.value = savedKey;
+        }
+        
+        // Control de micrófono
+        micBtn.addEventListener('click', () => {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        });
+        
+        function startListening() {
+            if (!isConnected) {
+                alert('Primero conecta tu API key');
+                return;
+            }
+            
+            isListening = true;
+            micBtn.classList.add('listening');
+            micBtn.textContent = '⏹️';
+            updateStatus('processing', '🎤 Escuchando...');
+            infoDiv.textContent = 'Habla ahora...';
+            
+            recognition.start();
+        }
+        
+        function stopListening() {
+            isListening = false;
+            micBtn.classList.remove('listening');
+            micBtn.textContent = '🎤';
+            
+            if (isConnected && !isProcessing) {
+                updateStatus('connected', '✅ Conectado - Listo para escuchar');
+                infoDiv.textContent = 'Presiona el micrófono para hablar';
+            }
+        }
+        
+        async function sendToClaudette(message) {
+            isProcessing = true;
+            updateStatus('processing', '🤔 Claudette está pensando...');
+            infoDiv.textContent = 'Procesando con 216 modelos mentales...';
+            
+            const systemPrompt = `Eres Claudette, asistente ejecutiva IA de Pablo con acceso a sus 216 modelos mentales universales.
+
+PERSONALIDAD:
+- Profesional pero cálida
+- Velocidad conversacional normal
+- Acento español neutro
+- Respuestas naturales y fluidas
+
+PROTOCOLO DE APLICACIÓN DE MODELOS MENTALES:
+
+1. Identifica el tipo de conversación:
+   - Casual/social → Responde natural SIN modelos
+   - Factual simple → Responde + menciona modelo si enriquece
+   - Decisión/dilema CON contexto → APLICA MODELOS AUTOMÁTICAMENTE
+   - Decisión/dilema SIN contexto → PREGUNTA PRIMERO, luego aplica
+   - Análisis profundo → MODO COMPLETO con 10-15 modelos
+
+2. Para decisiones/dilemas, pregúntate:
+   "¿Entiendo las variables clave, opciones, y consecuencias?"
+   - SI → Aplica modelos ahora
+   - NO → Pide contexto específico, luego aplica
+
+3. NUNCA preguntes "¿Quieres que aplique [modelo]?" - Ese es TU trabajo.
+
+4. SÉ PROACTIVA pero no forzada:
+   - Si un modelo ilumina la situación → úsalo
+   - Si no agrega valor → no lo menciones
+
+CONTEXTO DE PABLO:
+- Arquitecto y desarrollador inmobiliario, 56 años
+- Transformación post-pandemia: de alta performance a filosofía de slowness
+- 25+ años experiencia en zone francas e industrial parks
+- Trader (NQ futures), ultra-endurance athlete
+- Intereses: filosofía continental, geopolítica, especulative fiction
+- Proyectos actuales: Feline Canopy ($300k), TEDx audition, AI agents
+
+Responde de forma conversacional, como si estuvieras en una reunión ejecutiva con Pablo.`;
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1024,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: message
+                            }
+                        ],
+                        system: systemPrompt
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const reply = data.content[0].text;
+                
+                addMessage('assistant', reply);
+                speak(reply);
+                
+                updateStatus('connected', '✅ Conectado - Listo para escuchar');
+                infoDiv.textContent = 'Presiona el micrófono para continuar';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                updateStatus('disconnected', '❌ Error al conectar con Claude API');
+                addMessage('assistant', 'Lo siento Pablo, hubo un error al conectar con la API. Verifica tu key y créditos.');
+            } finally {
+                isProcessing = false;
+            }
+        }
+        
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                // Cancelar cualquier síntesis anterior
+                speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.1;
+                
+                // Buscar voz femenina española
+                const voices = speechSynthesis.getVoices();
+                const spanishVoice = voices.find(voice => 
+                    voice.lang.startsWith('es') && voice.name.includes('Female')
+                ) || voices.find(voice => 
+                    voice.lang.startsWith('es')
+                );
+                
+                if (spanishVoice) {
+                    utterance.voice = spanishVoice;
+                }
+                
+                speechSynthesis.speak(utterance);
+            }
+        }
+        
+        // Cargar voces cuando estén disponibles
+        if ('speechSynthesis' in window) {
+            speechSynthesis.onvoiceschanged = () => {
+                console.log('Voces cargadas:', speechSynthesis.getVoices().length);
+            };
+        }
+        
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.innerHTML = `
+                <strong>${role === 'user' ? 'Tú' : 'Claudette'}:</strong>
+                ${content}
+            `;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function updateStatus(type, message) {
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+    </script>
+</body>
+</html>
